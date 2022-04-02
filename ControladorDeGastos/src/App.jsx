@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Filtro from './components/Filtro';
 import Header from './components/Header'
 import ListaGastos from './components/ListaGastos';
 import Modal from './components/Modal';
@@ -7,13 +8,17 @@ import IconoNuevoGasto from './img/nuevo-gasto.svg'
 
 function App() {
 
-  const [presupuesto, setPresupuesto] = useState('');
+  const [presupuesto, setPresupuesto] = useState(Number(localStorage.getItem('presupuesto')) ?? 0);
   const [validoPresupuesto, setValidoPresupuesto] = useState(false);
   const [modal, setActivarModal] = useState(false);
   const [animarModal, setAnimarModal] = useState(false);
-  const [gastos, setGastos] = useState([]);
+  const [gastos, setGastos] = useState(
+    localStorage.getItem('gastos') ? JSON.parse(localStorage.getItem('gastos')) : []);
   const [gastoEditar, setGastoEditar] = useState({});
   const [gastoEliminar, setGastoEliminar] = useState({});
+  const [filtro, setFiltro] = useState('');
+  const [gastosFiltrados, setGastosFiltrados] = useState([]);
+
 
   useEffect(() => {
 
@@ -28,6 +33,29 @@ function App() {
     }
 
   }, [gastoEditar, gastoEliminar])
+
+  useEffect(() => {
+    localStorage.setItem('presupuesto', presupuesto ?? 0)
+  }, [presupuesto])
+
+  useEffect(() => {
+    localStorage.setItem('gastos', JSON.stringify(gastos) ?? [])
+  }, [gastos])
+
+  useEffect(() => {
+    if (filtro) {
+      const gastosFiltrados = gastos.filter(gasto => gasto.categoria === filtro)
+      setGastosFiltrados(gastosFiltrados)
+    }
+  }, [filtro]);
+
+  useEffect(() => {
+    const presupuestoLS = Number(localStorage.getItem('presupuesto')) ?? 0;
+
+    if (presupuestoLS > 0) {
+      setValidoPresupuesto(true)
+    }
+  }, []);
 
 
   const setModal = () => {
@@ -59,14 +87,22 @@ function App() {
       <Header
         presupuesto={presupuesto}
         setPresupuesto={setPresupuesto}
+        setGastos={setGastos}
         validoPresupuesto={validoPresupuesto}
         setValidoPresupuesto={setValidoPresupuesto}
         gastos={gastos}
       />
       {validoPresupuesto && (
         <>
+          <Filtro filtro={filtro} setFiltro={setFiltro} />
           <main>
-            <ListaGastos gastos={gastos} setGastoEditar={setGastoEditar} setGastoEliminar={setGastoEliminar} />
+            <ListaGastos
+              gastos={gastos}
+              setGastoEditar={setGastoEditar}
+              setGastoEliminar={setGastoEliminar}
+              filtro={filtro}
+              gastosFiltrados={gastosFiltrados}
+            />
           </main>
           <div className="nuevo-gasto">
             <img onClick={setModal} src={IconoNuevoGasto} alt="Agregar nuevo gasto." />
